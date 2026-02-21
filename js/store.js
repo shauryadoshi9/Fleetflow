@@ -77,6 +77,42 @@ const Store = {
         }
     },
 
+    // --- Predictive Intelligence ---
+    getVehicleHealth(id) {
+        const vehicle = this.getVehicleById(id);
+        if (!vehicle) return 0;
+
+        // Simple logic: Base health on odometer (50,000 unit intervals)
+        const threshold = 50000;
+        const currentUsage = vehicle.odometer % threshold;
+        const health = Math.max(0, 100 - (currentUsage / threshold * 100));
+
+        return {
+            score: Math.round(health),
+            status: health < 20 ? 'critical' : (health < 50 ? 'warning' : 'healthy'),
+            nextServiceIn: Math.round(threshold - currentUsage)
+        };
+    },
+
+    getMaintenancePredictions() {
+        return this.data.vehicles.map(v => ({
+            id: v.id,
+            name: v.name,
+            health: this.getVehicleHealth(v.id)
+        })).filter(v => v.health.score < 50);
+    },
+
+    getOptimizedRoute(origin, destination) {
+        // Mock optimization logic for maritime paths
+        const mockRoutes = [
+            { path: ['Coastal Corridor', 'Deep Sea Trench', 'Bay Approach'], distance: 1200, timeSaved: '1.5 days', risk: 'Low' },
+            { path: ['Northern Passage', 'Ice Buffer Zone', 'Port Channel'], distance: 1540, timeSaved: '0.8 days', risk: 'Medium' },
+            { path: ['Direct Vector', 'Neutral Waters', 'Inland Canal'], distance: 980, timeSaved: '2.4 days', risk: 'High (Weather)' }
+        ];
+
+        return mockRoutes[Math.floor(Math.random() * mockRoutes.length)];
+    },
+
     // --- Captain (Driver) Operations ---
     getDrivers() { return this.data.drivers; },
     getDriverById(id) { return this.data.drivers.find(d => d.id === id); },

@@ -151,3 +151,14 @@ App.pageInits.vehicles = () => {
     });
 };
 
+window.deleteVehicle = (id) => {
+    if (confirm('Are you sure you want to remove this vessel from the registry?')) {
+        try {
+            Store.deleteVehicle(id);
+            App.navigate('vehicles');
+        } catch (error) {
+            alert(error.message);
+        }
+    }
+};
+

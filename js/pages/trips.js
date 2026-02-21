@@ -30,6 +30,26 @@ App.pages.trips = () => {
                             <input type="text" id="t-dest" class="input" placeholder="Dest Port">
                         </div>
                     </div>
+                    
+                    <div class="optimization-zone glass-card-inner" id="route-optimization-box" style="display: none; margin-bottom: 1rem;">
+                        <div class="opt-header">
+                            <i data-lucide="sparkles" class="text-warning"></i>
+                            <span class="text-warning" style="font-weight: 700; font-size: 0.8rem;">SMART ROUTE CALCULATION</span>
+                        </div>
+                        <div id="route-details" style="font-size: 0.85rem; margin-top: 0.5rem;">
+                            <!-- Dynamic route content -->
+                        </div>
+                    </div>
+
+                    <div class="form-actions-row" style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
+                        <button type="button" id="btn-optimize" class="btn btn-outline" style="flex: 1;">
+                            <i data-lucide="map"></i> AI Route
+                        </button>
+                        <button type="submit" class="btn btn-primary" style="flex: 2;">
+                            <i data-lucide="anchor"></i> Authorize Dispatch
+                        </button>
+                    </div>
+
                     <div class="form-group">
                         <label class="label">Scheduled Arrival / Date</label>
                         <input type="datetime-local" id="t-eta" class="input">
@@ -38,7 +58,6 @@ App.pages.trips = () => {
                         <label class="label">Instruction for Lead / Driver</label>
                         <textarea id="t-cargo" class="input" placeholder="Enter Instructions"></textarea>
                     </div>
-                    <button type="submit" class="btn btn-primary" style="width: 100%; padding: 1rem;">Authorize Dispatch</button>
                 </form>
             </div>
 
@@ -64,24 +83,27 @@ App.pages.trips = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            ${trips.length ? trips.map(t => `
-                            <tr>
-                                <td>#8322</td>
-                                <td>${t.vehicle ? t.vehicle.name : 'N/A'}</td>
-                                <td>${t.origin}</td>
-                                <td>${t.destination}</td>
-                                <td><span class="pill pill-${getStatusColor(t.status)}">${t.status}</span></td>
-                                <td class="${t.status === 'dispatched' ? 'countdown' : ''}" data-eta="${t.eta}">
-                                    ${t.status === 'cancelled' ? '<span class="text-danger" style="font-weight:700;">Canceled</span>' :
-            t.status === 'arrived' ? '<span class="text-success" style="font-weight:700;">Arrived</span>' : 'Calculating...'}
-                                </td>
-                                <td>
-                                    ${t.status === 'dispatched' ? `
-                                        <button class="btn btn-sm btn-outline" onclick="cancelTrip('${t.id}')">Abort</button>
-                                    ` : '<span style="color: var(--text-muted); font-size: 0.8rem;">-</span>'}
-                                </td>
-                            </tr>
-                            `).join('') : '<tr><td colspan="7" style="text-align: center; padding: 2rem; color: var(--text-muted);">No active shipments</td></tr>'}
+                             ${trips.length ? trips.map(t => {
+        const tripId = t.id.toString().startsWith('t') ? t.id.slice(-4) : t.id;
+        return `
+                                <tr>
+                                    <td>#${tripId}</td>
+                                    <td>${t.vehicle ? t.vehicle.name : 'N/A'}</td>
+                                    <td>${t.origin}</td>
+                                    <td>${t.destination}</td>
+                                    <td><span class="pill pill-${getStatusColor(t.status)}">${t.status}</span></td>
+                                    <td class="${t.status === 'dispatched' ? 'countdown' : ''}" data-eta="${t.eta}">
+                                        ${t.status === 'cancelled' ? '<span class="text-danger" style="font-weight:700;">Canceled</span>' :
+                t.status === 'arrived' ? '<span class="text-success" style="font-weight:700;">Arrived</span>' : 'Calculating...'}
+                                    </td>
+                                    <td>
+                                        ${t.status === 'dispatched' ? `
+                                            <button class="btn btn-sm btn-outline" onclick="cancelTrip('${t.id}')">Abort</button>
+                                        ` : '<span style="color: var(--text-muted); font-size: 0.8rem;">-</span>'}
+                                    </td>
+                                </tr>
+                                `;
+    }).join('') : '<tr><td colspan="7" style="text-align: center; padding: 2rem; color: var(--text-muted);">No active shipments</td></tr>'}
                         </tbody>
                     </table>
                 </div>
@@ -99,6 +121,10 @@ App.pages.trips = () => {
     .form-grid-small { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
     .input-sm { padding: 0.4rem 0.8rem; font-size: 0.85rem; }
     .btn-sm { padding: 0.3rem 0.6rem; font-size: 0.75rem; }
+    .glass-card-inner { background: rgba(255, 255, 255, 0.05); border: 1px dashed rgba(255, 255, 255, 0.2); border-radius: 8px; padding: 1rem; }
+    .opt-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; }
+    .route-path { color: var(--text-muted); font-family: monospace; }
+    .stat-badge { font-size: 0.75rem; padding: 0.1rem 0.4rem; border-radius: 4px; background: rgba(255, 255, 255, 0.1); margin-right: 0.4rem; }
     </style>
     `;
 };
@@ -114,6 +140,7 @@ App.pageInits.trips = () => {
 
             if (diff <= 0) {
                 el.innerHTML = '<span class="text-success" style="font-weight:700;">Arrived</span>';
+                el.classList.remove('countdown'); // Stop updating this element
                 return;
             }
 
@@ -134,13 +161,42 @@ App.pageInits.trips = () => {
     updateCountdowns();
     const interval = setInterval(updateCountdowns, 1000);
 
-    // Cleanup interval on next navigation
+    // Safer cleanup: check current page hash before continuing
     const originalNavigate = App.navigate;
     App.navigate = function (pageId) {
         clearInterval(interval);
+        console.log('Cleanup Interval for Trips');
         App.navigate = originalNavigate;
         return originalNavigate.apply(this, arguments);
     };
+
+    const optBtn = document.getElementById('btn-optimize');
+    optBtn.addEventListener('click', () => {
+        const origin = document.getElementById('t-origin').value;
+        const dest = document.getElementById('t-dest').value;
+
+        if (!origin || !dest) {
+            alert('Please specify origin and destination first.');
+            return;
+        }
+
+        const route = Store.getOptimizedRoute(origin, dest);
+        const optBox = document.getElementById('route-optimization-box');
+        const details = document.getElementById('route-details');
+
+        details.innerHTML = `
+            <div style="margin-bottom: 0.5rem;">
+                <span class="stat-badge">Time Saved: ${route.timeSaved}</span>
+                <span class="stat-badge">Risk: ${route.risk}</span>
+            </div>
+            <div class="route-path">
+                ${route.path.join(' ➔ ')}
+            </div>
+        `;
+
+        optBox.style.display = 'block';
+        lucide.createIcons();
+    });
 
     const form = document.getElementById('dispatch-form-new');
     form.addEventListener('submit', (e) => {

@@ -25,6 +25,14 @@ const App = {
             this.navigate('login');
         });
 
+        // Modal Overlay Close (Outside click)
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('modal-overlay')) {
+                this.hideModal();
+            }
+        });
+
+
         // Check Auth and Initial Route
         this.checkAuth();
     },
@@ -118,6 +126,43 @@ const App = {
         // Page-specific setup logic
         if (this.pageInits[pageId]) {
             this.pageInits[pageId]();
+        }
+    },
+
+    showModal(title, content) {
+        let modal = document.querySelector('.modal-overlay');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+            document.body.appendChild(modal);
+        }
+
+        modal.innerHTML = `
+            <div class="modal-container">
+                <div class="modal-header">
+                    <h2>${title}</h2>
+                    <button class="btn-close-modal" onclick="App.hideModal()">
+                        <i data-lucide="x"></i>
+                    </button>
+                </div>
+                <div class="modal-body">${content}</div>
+                <div class="modal-footer">
+                    <button class="btn btn-outline" onclick="App.hideModal()">Close</button>
+                </div>
+            </div>
+        `;
+
+        lucide.createIcons();
+        setTimeout(() => modal.classList.add('active'), 10);
+    },
+
+    hideModal() {
+        const modal = document.querySelector('.modal-overlay');
+        if (modal) {
+            modal.classList.remove('active');
+            setTimeout(() => {
+                modal.innerHTML = '';
+            }, 300);
         }
     },
 
