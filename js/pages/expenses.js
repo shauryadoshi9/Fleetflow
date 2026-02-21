@@ -7,148 +7,93 @@ App.pages.expenses = () => {
     const allExpenses = Store.data.expenses;
 
     return `
-    <div class="expenses-page">
-        <div class="expense-overview-grid">
-            ${vehicles.map(v => {
-        const stats = Store.getVehicleStats(v.id);
-        return `
-                <div class="asset-cost-card glass-card">
-                    <div class="asset-info">
-                        <strong>${v.name}</strong>
-                        <span class="pill pill-info" style="font-size: 0.65rem;">${v.plate}</span>
-                    </div>
-                    <div class="cost-breakdown">
-                        <div class="cost-item">
-                            <span>Fuel</span>
-                            <span>₹${stats.totalFuel}</span>
-                        </div>
-                        <div class="cost-item">
-                            <span>Maint.</span>
-                            <span>₹${stats.totalMaint}</span>
-                        </div>
-                        <div class="cost-total">
-                            <span>Total Op. Cost</span>
-                            <span>₹${stats.totalOperationalCost}</span>
-                        </div>
-                    </div>
+    <div class="expenses-page fade-in">
+        <div class="split-layout">
+            <!-- Logging Section -->
+            <div class="logging-section glass-card">
+                <div class="section-header">
+                    <h3>Asset Expense & Fuel Log</h3>
                 </div>
-                `;
-    }).join('')}
-        </div>
-
-        <div class="expense-actions-row">
-            <div class="glass-card" style="flex: 1;">
-                <h3>Log Fuel Consumption</h3>
-                <form id="fuel-form" class="inline-form">
-                    <select id="fuel-vehicle" class="input" required>
-                        <option value="">Vehicle...</option>
-                        ${vehicles.map(v => `<option value="${v.id}">${v.name}</option>`).join('')}
-                    </select>
-                    <input type="number" id="fuel-liters" class="input" placeholder="Liters" required>
-                    <input type="number" id="fuel-cost" class="input" placeholder="Cost (₹)" required>
-                    <button type="submit" class="btn btn-primary">Record Fuel</button>
+                <form id="fuel-form-new">
+                    <div class="form-group">
+                        <label class="label">Vessel</label>
+                        <select id="f-vehicle" class="input" required>
+                            <option value="">Select Vessel</option>
+                            ${vehicles.map(v => `<option value="${v.id}">${v.name}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="label">Fuel Liters</label>
+                        <input type="number" id="f-liters" class="input" placeholder="Liters" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="label">Total Amount (₹)</label>
+                        <input type="number" id="f-amount" class="input" placeholder="₹ Amount" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">Record Expense</button>
                 </form>
             </div>
-        </div>
 
-        <div class="data-table-container glass-card" style="margin-top: 2rem;">
-            <h3>Recent Financial Logs</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Asset</th>
-                        <th>Type</th>
-                        <th>Description</th>
-                        <th>Amount</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${allExpenses.slice().reverse().map(e => {
+            <!-- History Section -->
+            <div class="history-section glass-card">
+                <div class="section-header">
+                    <h3>Recent Financial Logs</h3>
+                </div>
+                <div class="data-table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Vessel</th>
+                                <th>Type</th>
+                                <th>Amt (₹)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${allExpenses.slice().reverse().map(e => {
         const v = Store.getVehicleById(e.vehicleId);
         return `
-                        <tr>
-                            <td>${e.date}</td>
-                            <td>${v ? v.name : 'Unknown'}</td>
-                            <td><span class="pill pill-${e.type === 'Fuel' ? 'info' : 'warning'}">${e.type}</span></td>
-                            <td>${e.description || (e.liters ? e.liters + ' Liters' : '-')}</td>
-                            <td style="font-weight: 600;">₹${e.amount}</td>
-                        </tr>
-                        `;
+                            <tr>
+                                <td>${e.date}</td>
+                                <td>${v ? v.name : 'Unknown'}</td>
+                                <td><span class="pill pill-info">${e.type}</span></td>
+                                <td style="font-weight: 700;">₹${e.amount}</td>
+                            </tr>
+                            `;
     }).join('')}
-                </tbody>
-            </table>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
-
     <style>
-    .expense-overview-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: 1.5rem;
-        margin-bottom: 2rem;
-    }
-    .asset-cost-card {
-        padding: 1.25rem;
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-    }
-    .asset-info {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        border-bottom: 1px solid var(--border);
-        padding-bottom: 0.75rem;
-    }
-    .cost-breakdown {
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-    }
-    .cost-item {
-        display: flex;
-        justify-content: space-between;
-        font-size: 0.85rem;
-        color: var(--text-muted);
-    }
-    .cost-total {
-        display: flex;
-        justify-content: space-between;
-        font-weight: 700;
-        margin-top: 0.5rem;
-        color: var(--text-main);
-        border-top: 1px dashed var(--border);
-        padding-top: 0.5rem;
-    }
-    .inline-form {
-        display: flex;
-        gap: 1rem;
-        margin-top: 1rem;
-    }
+    .split-layout { display: grid; grid-template-columns: 350px 1fr; gap: 2rem; }
     </style>
     `;
 };
 
 App.pageInits.expenses = () => {
-    const fuelForm = document.getElementById('fuel-form');
-    fuelForm.addEventListener('submit', (e) => {
-        e.preventDefault();
+    lucide.createIcons();
+    const form = document.getElementById('fuel-form-new');
+    if (form) {
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const vid = document.getElementById('f-vehicle').value;
+            const amount = parseFloat(document.getElementById('f-amount').value);
+            const liters = parseFloat(document.getElementById('f-liters').value);
 
-        const vehicleId = document.getElementById('fuel-vehicle').value;
-        const liters = parseFloat(document.getElementById('fuel-liters').value);
-        const amount = parseFloat(document.getElementById('fuel-cost').value);
-
-        Store.data.expenses.push({
-            id: 'e' + Date.now(),
-            vehicleId,
-            type: 'Fuel',
-            amount,
-            liters,
-            date: new Date().toISOString().split('T')[0]
+            Store.data.expenses.push({
+                id: 'e' + Date.now(),
+                vehicleId: vid,
+                type: 'Fuel',
+                amount,
+                liters,
+                date: new Date().toISOString().split('T')[0]
+            });
+            Store.save();
+            App.navigate('expenses');
         });
-
-        Store.save();
-        App.navigate('expenses');
-    });
+    }
 };
+

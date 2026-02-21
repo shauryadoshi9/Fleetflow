@@ -93,14 +93,14 @@ const App = {
 
     updateHeader(pageId) {
         const titleMap = {
-            'dashboard': 'Maritime Command Center',
-            'vehicles': 'Vessel Registry',
-            'drivers': 'Captain Profiles',
-            'trips': 'Maritime Logistics',
-            'maintenance': 'Ship Dry-Dock Logs',
-            'expenses': 'Bunker & Port Costs',
-            'analytics': 'Global Logistics Analytics',
-            'login': 'Port Login'
+            'dashboard': 'Fleet Command Center',
+            'vehicles': 'Vessel Maintenance & Registry',
+            'drivers': 'Captain Profiles & Safety',
+            'trips': 'Logistics Dispatch Control',
+            'maintenance': 'Service & Dry-Dock Logs',
+            'expenses': 'Fleet Operational Spend',
+            'analytics': 'Strategic Logistics Intelligence',
+            'login': 'Fleet Flow Secure Access'
         };
         document.getElementById('page-title').textContent = titleMap[pageId] || pageId;
     },
@@ -129,6 +129,7 @@ window.getStatusColor = (status) => {
     switch (status) {
         case 'available':
         case 'on duty':
+        case 'arrived':
             return 'success';
         case 'on trip':
             return 'info';
@@ -138,6 +139,7 @@ window.getStatusColor = (status) => {
         case 'retired':
         case 'suspended':
         case 'off duty':
+        case 'cancelled':
             return 'danger';
         default:
             return 'info';

@@ -23,6 +23,9 @@ const Store = {
             { id: 'e1', vehicleId: 'v1', type: 'Fuel', amount: 45000, liters: 50000, date: '2024-03-15' },
             { id: 'e2', vehicleId: 'v3', type: 'Maintenance', amount: 15000, date: '2024-03-18', description: 'Engine Overhaul' }
         ],
+        users: [
+            { id: 'u1', name: 'Fleet Admin', email: 'admin@fleethub.com', password: 'admin123', role: 'manager' }
+        ],
         currentUser: null
     },
 
@@ -32,6 +35,12 @@ const Store = {
             localStorage.setItem('fleethub_data', JSON.stringify(this.defaults));
         }
         this.data = JSON.parse(localStorage.getItem('fleethub_data'));
+
+        // Migration: Ensure users array exists
+        if (!this.data.users) {
+            this.data.users = [...this.defaults.users];
+            this.save();
+        }
     },
 
     // Save current state
@@ -181,13 +190,27 @@ const Store = {
 
     // --- Authentication ---
     login(email, password) {
-        if (email.includes('admin') && password === 'admin123') {
-            this.data.currentUser = { name: 'Port Authority', role: 'manager' };
-        } else {
-            this.data.currentUser = { name: 'Logistic Specialist', role: 'dispatcher' };
+        const user = this.data.users.find(u => u.email === email && u.password === password);
+        if (user) {
+            this.data.currentUser = { ...user };
+            delete this.data.currentUser.password; // Don't store password in session
+            this.save();
+            return this.data.currentUser;
         }
+        return null;
+    },
+    register(userData) {
+        if (this.data.users.find(u => u.email === userData.email)) {
+            throw new Error("User with this email already exists.");
+        }
+        const newUser = {
+            id: 'u' + Date.now(),
+            ...userData,
+            role: 'manager' // Default for demo
+        };
+        this.data.users.push(newUser);
         this.save();
-        return this.data.currentUser;
+        return newUser;
     },
     logout() {
         this.data.currentUser = null;
