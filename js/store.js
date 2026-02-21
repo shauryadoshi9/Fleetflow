@@ -216,6 +216,15 @@ const Store = {
         this.data.currentUser = null;
         this.save();
     },
+    resetPassword(email, newPassword) {
+        const user = this.data.users.find(u => u.email === email);
+        if (user) {
+            user.password = newPassword;
+            this.save();
+            return true;
+        }
+        return false;
+    },
     getCurrentUser() { return this.data.currentUser; }
 };
 

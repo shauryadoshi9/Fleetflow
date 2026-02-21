@@ -6,7 +6,7 @@ App.pages.login = () => `
 <div class="login-container fade-in">
     <div class="login-content">
         <!-- Login Section -->
-        <div class="auth-section">
+        <div class="auth-section" id="login-section">
             <div class="auth-card glass-card">
                 <div class="auth-header">
                     <div class="logo-icon-large"></div>
@@ -23,14 +23,14 @@ App.pages.login = () => `
                     </div>
                     <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Login</button>
                     <div class="auth-links">
-                        <a href="#">Forgot Password?</a>
+                        <a href="#" id="forgot-password-link">Forgot Password?</a>
                     </div>
                 </form>
             </div>
         </div>
 
         <!-- Register Section -->
-        <div class="auth-section">
+        <div class="auth-section" id="register-section">
             <div class="auth-card glass-card">
                 <div class="auth-header">
                     <div class="logo-icon-large red"></div>
@@ -51,6 +51,31 @@ App.pages.login = () => `
                         <input type="password" id="reg-password" class="input" placeholder="Create a password" required>
                     </div>
                     <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Register</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Forgot Password Section (Initially Hidden) -->
+        <div class="auth-section hidden" id="forgot-section">
+            <div class="auth-card glass-card">
+                <div class="auth-header">
+                    <div class="logo-icon-large orange"></div>
+                    <h2>Reset Password</h2>
+                    <p>Enter your email and a new password to reset your access.</p>
+                </div>
+                <form id="forgot-form">
+                    <div class="form-group">
+                        <label class="label">Email Address</label>
+                        <input type="email" id="forgot-email" class="input" placeholder="Enter your email" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="label">New Password</label>
+                        <input type="password" id="forgot-new-password" class="input" placeholder="Enter new password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Reset Password</button>
+                    <div class="auth-links">
+                        <a href="#" id="back-to-login">Back to Login</a>
+                    </div>
                 </form>
             </div>
         </div>
@@ -97,6 +122,9 @@ App.pages.login = () => `
 .logo-icon-large.red {
     border-color: var(--danger);
 }
+.logo-icon-large.orange {
+    border-color: var(--warning);
+}
 .auth-links {
     margin-top: 1.5rem;
     text-align: center;
@@ -106,12 +134,38 @@ App.pages.login = () => `
     text-decoration: none;
     font-size: 0.9rem;
 }
+.hidden {
+    display: none;
+}
 </style>
 `;
 
 App.pageInits.login = () => {
     const loginForm = document.getElementById('login-form');
     const registerForm = document.getElementById('register-form');
+    const forgotForm = document.getElementById('forgot-form');
+
+    const loginSection = document.getElementById('login-section');
+    const registerSection = document.getElementById('register-section');
+    const forgotSection = document.getElementById('forgot-section');
+
+    const forgotLink = document.getElementById('forgot-password-link');
+    const backToLoginLink = document.getElementById('back-to-login');
+
+    // Navigation between forms
+    forgotLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        loginSection.classList.add('hidden');
+        registerSection.classList.add('hidden');
+        forgotSection.classList.remove('hidden');
+    });
+
+    backToLoginLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        loginSection.classList.remove('hidden');
+        registerSection.classList.remove('hidden');
+        forgotSection.classList.add('hidden');
+    });
 
     loginForm.addEventListener('submit', (e) => {
         e.preventDefault();
@@ -140,6 +194,23 @@ App.pageInits.login = () => {
             registerForm.reset();
         } catch (error) {
             alert(error.message);
+        }
+    });
+
+    forgotForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const email = document.getElementById('forgot-email').value;
+        const newPass = document.getElementById('forgot-new-password').value;
+
+        const success = Store.resetPassword(email, newPass);
+        if (success) {
+            alert('Password reset successful! You can now login with your new password.');
+            forgotForm.reset();
+            loginSection.classList.remove('hidden');
+            registerSection.classList.remove('hidden');
+            forgotSection.classList.add('hidden');
+        } else {
+            alert('User with this email not found.');
         }
     });
 };
